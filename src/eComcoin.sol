@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-contract OreOreCoin{
+contract eComCoin{
     string public name;
     string public symbol;
     uint8 public decimals;
@@ -19,6 +19,8 @@ contract OreOreCoin{
     function transfer ( address _to, uint256 _value) public{
         require(balanceOf[msg.sender] > _value, "Not enough Tokens");
         require(balanceOf[_to] + _value > balanceOf[_to], "No space for Tokens");
-
+        balanceOf[msg.sender] -= _value;
+        balanceOf[_to] += _value;
+        emit Transfer(msg.sender, _to, _value);
     }
 }
