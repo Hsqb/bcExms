@@ -9,11 +9,15 @@ contract eComCoin{
 
     mapping(address => uint256) public balanceOf;
     mapping(address => int8) public blacklist;
+    mapping(address => int8) public cashback;
+
     event Transfer(address indexed from, address indexed to, uint256 value);
     event blockAddress(address indexed target);
     event releaseAddress(address indexed target);
     event RejectPaymentFromBlockListedAddress(address indexed from, address indexed to, uint256 value);
     event RejectPaymentToBlockListedAddress(address indexed from, address indexed to, uint256 value);
+    event setCashBack(address indexed from, int8 value);
+    event refundCashBack(address indexed from, address indexed to, uint256 value);
 
     modifier onlyOwner() { 
         require(msg.sender == owner, "Sender is not owner");
@@ -35,9 +39,11 @@ contract eComCoin{
         }else if(blacklist[_to] > 0){
             emit RejectPaymentToBlockListedAddress(msg.sender, _to, _value);
         }else{
-            balanceOf[msg.sender] -= _value;
-            balanceOf[_to] += _value;
+            uint256 cashbackVal = _value / 100 * uint256(cashback[_to]) ;
+            balanceOf[msg.sender] -= (_value - cashbackVal);
+            balanceOf[_to] += (_value - cashbackVal);
             emit Transfer(msg.sender, _to, _value);
+            emit refundCashBack(_to, msg.sender, cashbackVal);
         }
     }
     function addAddressToBlacklist( address _to)  public onlyOwner {
@@ -47,5 +53,19 @@ contract eComCoin{
     function removeAddressFromBlacklist( address _to)  public onlyOwner {
         blacklist[_to] = 0;
         emit releaseAddress(_to);
+    }
+    function setCashbackPercentage(int8 cashbackVal)  public {
+        //require(cashbackVal >= 0 && cashbackVal <= 100, "Cashback Value should be in between 0 to 100.");
+        if(cashbackVal < 1){
+            cashbackVal = 0;
+        }else if(cashbackVal > 100){
+            cashbackVal = 100;
+        }
+        cashback[msg.sender] = cashbackVal;
+        if(cashbackVal < 1)
+        {
+            cashbackVal = 0;
+        }
+        emit setCashBack(msg.sender, cashbackVal);
     }
 }
